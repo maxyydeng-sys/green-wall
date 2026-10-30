@@ -653,6 +653,33 @@ async function main() {
     record('T34 已存在但未提交的记录明确失败并保留内容', ok, ok ? '' : r.stderr);
   }
 
+
+  // ---------- T35: execute the real workflow shell with an argv-recording Node shim ----------
+  {
+    const workflow = readFileSync(path.join(HERE, '../.github/workflows/auto-commit.yml'), 'utf8');
+    const match = /- name: 演练并运行自动提交系统[\s\S]*?run:\s*\|\n([\s\S]*?)(?=\n      - name:)/.exec(workflow);
+    const temp = path.join(workdir, 'workflow-shell');
+    mkdirSync(temp);
+    const shim = path.join(temp, 'node');
+    writeFileSync(shim, `#!${process.execPath}\nconst fs=require('node:fs');fs.appendFileSync(process.env.CALLS,JSON.stringify(process.argv.slice(2))+'\\n');process.stdout.write(JSON.stringify({ok:true})+'\\n');\n`, { mode: 0o755 });
+    const callsFile = path.join(temp, 'calls.jsonl');
+    const marker = path.join(temp, 'must-not-exist');
+    const payload = `2026-10-30; touch ${marker}`;
+    let ok = Boolean(match), detail = '';
+    if (match) {
+      const body = match[1].replace(/^ {10}/gm, '');
+      const shellEnv = { PATH: `${temp}${path.delimiter}${process.env.PATH}`, RUNNER_TEMP: temp, CALLS: callsFile, INPUT_DATE: payload };
+      sh('bash', ['-c', body], { cwd: repo, env: { ...shellEnv, INPUT_DRY_RUN: 'false' } });
+      const actual = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
+      writeFileSync(callsFile, '');
+      sh('bash', ['-c', body], { cwd: repo, env: { ...shellEnv, INPUT_DRY_RUN: 'true' } });
+      const dry = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
+      ok = actual.length === 2 && actual[0].includes('--dry-run') && !actual[1].includes('--dry-run') && dry.length === 1 && dry[0].includes('--dry-run') && [...actual, ...dry].every(args => args[args.indexOf('--date') + 1] === payload) && !existsSync(marker);
+      detail = `actual=${actual.length}, dry=${dry.length}`;
+    }
+    record('T35 工作流先演练再执行，演练模式不执行真实任务，日期输入不注入 shell', ok, ok ? '' : detail);
+  }
+
   // ---------- 汇总 ----------
   const passed = results.filter((r) => r.ok === true).length;
   const failed = results.filter((r) => r.ok === false).length;

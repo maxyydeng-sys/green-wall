@@ -10,9 +10,10 @@
 - 提交邮箱：`maxyydeng@gmail.com`（用户提供，需在 GitHub Settings → Emails 中确认已验证）
 - 时区：`Asia/Shanghai`
 - 计划调度：北京时间 **11:17 / 15:17**；第二次为幂等容错
+- GitHub 仓库：https://github.com/maxyydeng-sys/green-wall
 - 当前项目路径：`/Users/yyd/Documents/ChatGPT/11 _ 自动刷仓`
 
-本地配置就绪不代表线上已启用。必须把项目推到实际 GitHub 仓库默认分支，并在 Actions 中完成一次演练及真实运行验收。
+代码已发布到上方仓库默认分支。工作流更新会触发部署验收：先演练，再执行真实任务；每日记录更新不触发该入口。定时任务是否实际成功，以 Actions 运行摘要和远端记录为准。
 
 ## 快速使用
 

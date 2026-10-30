@@ -18,7 +18,7 @@
 - `scripts/author.mjs`：提交身份与平台/机器人邮箱防线。
 - `scripts/summary.mjs`：JSON 转 Actions 运行摘要。
 - `scripts/selftest.mjs`：临时仓库中的行为回归；默认离线，--network 额外联网。
-- `.github/workflows/auto-commit.yml`：唯一日常调度入口，两次 UTC cron + 手动触发。
+- `.github/workflows/auto-commit.yml`：唯一日常调度入口，两次 UTC cron + 手动触发；工作流更新时在默认分支做部署验收。
 - `.github/workflows/ci.yml`：Node 20 / 24 离线回归，不把真实数据目录更新算作代码变更。
 - `data/daily/YYYY-MM-DD.md`：每日记录，已有文件不覆盖。
 - `.green-wall/`：本机摘要和最近 30 次运行，必须被 git 忽略。
