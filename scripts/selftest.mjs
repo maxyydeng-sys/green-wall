@@ -670,14 +670,22 @@ async function main() {
       const body = match[1].replace(/^ {10}/gm, '');
       const shellEnv = { PATH: `${temp}${path.delimiter}${process.env.PATH}`, RUNNER_TEMP: temp, CALLS: callsFile, INPUT_DATE: payload };
       sh('bash', ['-c', body], { cwd: repo, env: { ...shellEnv, INPUT_DRY_RUN: 'false' } });
-      const actual = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
+      const actualAll = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
+      const actual = actualAll.filter(args => args[1] === 'run');
       writeFileSync(callsFile, '');
       sh('bash', ['-c', body], { cwd: repo, env: { ...shellEnv, INPUT_DRY_RUN: 'true' } });
-      const dry = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
-      ok = actual.length === 2 && actual[0].includes('--dry-run') && !actual[1].includes('--dry-run') && dry.length === 1 && dry[0].includes('--dry-run') && [...actual, ...dry].every(args => args[args.indexOf('--date') + 1] === payload) && !existsSync(marker);
+      const dryAll = readFileSync(callsFile, 'utf8').trim().split('\n').map(JSON.parse);
+      const dry = dryAll.filter(args => args[1] === 'run');
+      ok = actualAll.filter(args => args[1] === 'preview').length === 1 && dryAll.filter(args => args[1] === 'preview').length === 1 && actual.length === 2 && actual[0].includes('--dry-run') && !actual[1].includes('--dry-run') && dry.length === 1 && dry[0].includes('--dry-run') && [...actual, ...dry].every(args => args[args.indexOf('--date') + 1] === payload) && !existsSync(marker);
       detail = `actual=${actual.length}, dry=${dry.length}`;
     }
     record('T35 工作流先演练再执行，演练模式不执行真实任务，日期输入不注入 shell', ok, ok ? '' : detail);
+  }
+
+  // ---------- T36: source adapters and rich-report integration (node:test) ----------
+  {
+    const r = runScript(path.join(HERE, 'digest.test.mjs'), [], { cwd: repo });
+    record('T36 日报资料接入回归（来源、比较、失败和 CLI 场景）', r.code === 0, r.code === 0 ? '' : `${r.stdout}\n${r.stderr}`);
   }
 
   // ---------- 汇总 ----------

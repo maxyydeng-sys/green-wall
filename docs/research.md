@@ -19,3 +19,12 @@
 ## 后续开发流程
 
 每次新项目或实质性迭代，先检索 GitHub 的同类项目与相关问题，阅读实现和许可证，记录采用与不采用的原因；再做最小必要改动并验证。GitHub 无法访问时明确说明限制，继续可独立完成的工作。
+
+## 每日资料升级研究（2026-10-30）
+
+- [eudoxia0/hashcards](https://github.com/eudoxia0/hashcards)：阅读 README、默认分支的 src/parser.rs 和 LICENSE，许可证为 Apache-2.0。借鉴纯文本显式问答、来源定位与确定性处理；不引入其 Rust/数据库/复习调度依赖，不复制代码。
+- [hassaanz/repo-report](https://github.com/hassaanz/repo-report)：阅读 README 与 simple-report.sh，借鉴按时间窗口输出项目活动报告的结构。README 声明 MIT，但仓库根目录列表未见独立 LICENSE；仅参考设计，不复用源码或上传脚本。
+- GitHub 官方 [Issues API](https://docs.github.com/en/rest/issues/issues#list-repository-issues) 明确 Issue 接口包含 PR，因此本系统按 pull_request 字段分别统计。
+- 使用官方 [Commits API](https://docs.github.com/en/rest/commits/commits#list-commits) 和 [Latest Release API](https://docs.github.com/en/rest/releases/releases#get-the-latest-release)，保留来源、分页截断标记和采集时间。Latest Release 不作为 LTS 判定。
+
+用户确认的来源为 notes/、maxyydeng-sys/green-wall 与 nodejs/node 最新发布信息。报告结构化快照嵌入单个每日 Markdown；不覆盖历史、不为纯刷新再造当日提交。

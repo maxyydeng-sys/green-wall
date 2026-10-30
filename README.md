@@ -1,6 +1,6 @@
 # Green Wall · 自动刷库系统
 
-每天自动生成一份仓库运行记录并提交到默认分支。提供初始化、健康检查、运行、状态查询、失败补推和 GitHub Actions 定时调度，零第三方依赖，Node >= 20。
+每天整理学习笔记、项目进展与公开数据，生成带来源和结构化快照的日报并提交到默认分支。提供初始化、健康检查、运行、状态查询、失败补推和 GitHub Actions 定时调度，零第三方依赖，Node >= 20。
 
 默认每天生成一份记录；同日重复运行不重复提交。所有自动提交保留 `[auto]` 标记，回填日期明确标注。
 
@@ -22,6 +22,8 @@
 ```sh
 ./green-wall --help
 ./green-wall status
+./green-wall note
+./green-wall preview
 ./green-wall doctor --network
 ./green-wall run --dry-run
 ./green-wall run --no-push
@@ -74,6 +76,9 @@ GitHub 贡献统计还取决于邮箱关联、默认分支及仓库类型；私�
 | `dataDir` | 仓库内相对目录，默认 data/daily，拒绝符号链接和 Git 元数据目录 |
 | `pushAttempts` | 推送尝试次数，1–5，默认 3 |
 | `author.name / email / actor` | 提交显示名、邮箱、GitHub 用户名 |
+| `content.learning` | 启用学习笔记及 notesDir |
+| `content.projects` | 启用项目活动及公开仓库列表 |
+| `content.publicData` | 启用 Node.js 最新 Release 快照 |
 
 暂停：将 `enabled` 改为 false 并提交推送；恢复改为 true。Actions 仍会按时间唤起并报告 paused；要停止唤起可在 GitHub Actions 中禁用工作流。
 
@@ -96,7 +101,7 @@ GitHub 贡献统计还取决于邮箱关联、默认分支及仓库类型；私�
 ./green-wall status --json
 ```
 
-生成记录包括日期、生成时间、触发方式、仓库累计提交数和回填标记。提交身份会在推送前核对；拦截平台和机器人邮箱，不会修改全局 git 身份。
+生成记录保留日期、生成时间、触发方式、仓库累计提交数和回填标记，并加入下述三个资料板块。提交身份会在推送前核对；拦截平台和机器人邮箱，不会修改全局 git 身份。
 
 推送暂时失败时会有限重试并返回失败。本地提交会保留，用相同日期重跑可核对远端并补推；只补推 author 一致、带 `[auto]` 标记且仅涉及每日记录的提交。若混有人工提交、远端分叉或权限拒绝，系统明确报错，保留现场供手动处理。GitHub 的第二次定时任务在全新检出中重跑，若第一次没有推送记录，会重新生成该日记录。
 
@@ -108,6 +113,37 @@ node scripts/author.mjs --verify-last-commit
 ```
 
 高级参数 `--force-dirty` 仍只提交生成记录，保留无关暂存内容；`--empty` 会显式生成空提交并保留用户索引。日常使用不需要这些参数。系统不批量循环补历史，也不 force push、rebase 或自动合并冲突。
+
+## 每日资料来源
+
+当前已配置以下三项，均不依赖 AI API 或第三方运行依赖：
+
+| 板块 | 输入 | 生成结果 |
+| --- | --- | --- |
+| 学习积累 | 本仓库 notes/YYYY-MM-DD.md | 学习正文、显式 Q:/A: 知识卡片、已完成/待处理复选框数量，保留原文路径和 SHA-256 |
+| 项目管理 | maxyydeng-sys/green-wall 公开 GitHub API | 当日非自动提交、自动归档提交、未关闭 Issue 与 PR、当日关闭 Issue、待处理 Issue 列表、Star/Fork 与基线变化 |
+| 数据归档 | nodejs/node 的 GitHub Latest Release | 非预发布版本号、发布时间、发布链接和较基线版本变化；不是专门筛选 LTS，不会自动升级项目运行时 |
+
+新增真实笔记的流程：
+
+```sh
+./green-wall note                 # 创建当天空白笔记，不编造学习内容
+# 编辑 notes/YYYY-MM-DD.md，再提交推送到 GitHub
+./green-wall preview              # 只读预览；当天已有日报也可预览新格式
+./green-wall preview --json       # Markdown + 结构化快照 + 来源列表
+```
+
+笔记格式见 [notes 说明](notes/README.md)，示例工程笔记见 [2026-10-30](notes/2026-10-30.md)。知识卡片只提取代码块外的单行 Q: / A:，不使用模型猜测或补写答案。没有笔记会明确标记缺少输入。
+
+**采集截止于当次运行时刻，不保证覆盖完整一天。** 线上只能读取已推送的笔记；上午日报生成后，下午补交的笔记不会改写当天日报，可以用 preview 查看。现有 11:17 / 15:17 调度与每日不可覆盖规则保持不变。
+
+所有公开指标标记采集时刻。当日提交按 Asia/Shanghai 自然日查询，Issue 数量与 Node 版本属于采集时状态；回填不能还原当时的公开状态。列表每接口最多读取 100 项，超过上限明确显示“至少”，避免把部分数据当作精确总量。
+
+快照直接保存在每日 Markdown 的折叠区内，用于和此前最近一份有效快照比较。仍然只提交一个文件，不额外写快照文件，也不修改历史日报。旧版记录没有快照时，从新版本第一天建立基线。
+
+外部必需来源失败会返回 DIGEST_SOURCE_FAILED，不生成或提交残缺日报，使后续调度可重试。来源配置仅允许明确的公开 GitHub 仓库和固定 Node.js 发布接口，不归档私有仓库，也不扫描本机其他笔记目录。
+
+工作流会先调用 preview 验证数据来源，并把 digest-preview.json 与运行摘要作为 artifact 保留 14 天。今天已有旧格式日报时，部署验收只预览，不覆盖旧记录；后续新日期自动使用新格式。
 
 ## 观察运行结果
 
@@ -131,6 +167,8 @@ node scripts/author.mjs --verify-last-commit
 | `RUN_LOCKED` | 等其他运行结束；崩溃后先确认进程已结束，再删除错误中指出的临时锁文件 |
 | `UNSAFE_PENDING_COMMITS / REMOTE_DIVERGED` | 检查 git log 与远端，手动处理同步后重试 |
 | 推送失败 | 检查网络、凭据、写权限和分支保护；修好后用相同日期重跑 |
+| `DIGEST_SOURCE_FAILED` | 数据来源采集失败；查看 HTTP 状态和配置，稍后重试，不会写成零活动 |
+| `NOTES_EXIST` | 笔记已存在；直接编辑，不会覆盖 |
 
 GitHub 定时不是精确时钟，可能延迟或被停用。每日第二次运行是容错，不是可用性保证。失败由 GitHub Actions 自身通知策略通知仓库所有者；项目不会向第三方发送消息。
 

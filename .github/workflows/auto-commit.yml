@@ -22,6 +22,8 @@ on:
 
 permissions:
   contents: write
+  issues: read
+  pull-requests: read
 
 concurrency:
   group: auto-commit
@@ -69,6 +71,7 @@ jobs:
           if [ -n "${INPUT_DATE:-}" ]; then
             FLAGS+=(--date "$INPUT_DATE")
           fi
+          node scripts/green-wall.mjs preview "${FLAGS[@]}" --json | tee "$RUNNER_TEMP/digest-preview.json"
           if [ "${INPUT_DRY_RUN:-}" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
@@ -88,7 +91,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: green-wall-run-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/summary.json
+          path: |
+            ${{ runner.temp }}/summary.json
+            ${{ runner.temp }}/digest-preview.json
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14

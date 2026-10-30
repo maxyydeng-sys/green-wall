@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CONFIG_NAME, defaults, loadConfig, validateConfig, effectiveAuthor } from './config.mjs';
 import { resolveAuthor } from './author.mjs';
+import { buildDailyDigest, calendarDate } from './digest.mjs';
 import { failure, repositoryRoot, git, gitSafe, detectDefaultBranch, safeDataFile, safeRepositoryPath, lockPath } from './repository.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -14,6 +15,8 @@ const help = `Green Wall · 自动提交系统（Node >= 20，零第三方依赖
   node scripts/green-wall.mjs init --author-name <名字> --author-email <邮箱> [--actor <GitHub用户名>] [--repo owner/repo]
   node scripts/green-wall.mjs doctor [--network] [--json]
   node scripts/green-wall.mjs status [--json]
+  node scripts/green-wall.mjs note [--date YYYY-MM-DD]
+  node scripts/green-wall.mjs preview [--date YYYY-MM-DD] [--json]
   node scripts/green-wall.mjs run [--dry-run] [--no-push] [--date YYYY-MM-DD] [其他 auto-commit 参数]
   node scripts/green-wall.mjs test [--network]
 
@@ -103,6 +106,22 @@ async function main() {
 
   const config = loadConfig(cwd);
   const json = argv.includes('--json');
+  if (command === 'note' || command === 'preview') {
+    const date = calendarDate(take(argv, 'date') || new Intl.DateTimeFormat('en-CA', { timeZone: config.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()));
+    assertFlags(argv, command === 'preview' ? ['--json'] : []);
+    if (command === 'note') {
+      const file = safeDataFile(cwd, config.content.learning.notesDir, date);
+      if (existsSync(file.absolute)) throw failure('NOTES_EXIST', `学习笔记已存在：${file.relative}，不会覆盖。`);
+      mkdirSync(path.dirname(file.absolute), { recursive: true });
+      safeDataFile(cwd, config.content.learning.notesDir, date);
+      writeFileSync(file.absolute, `# ${date}\n\n## 学习笔记\n\n## 知识卡片\n\n## 待办\n`, { flag: 'wx' });
+      process.stdout.write(`已创建 ${file.relative}。填写笔记与 Q:/A: 问答，提交推送后，线上日报才能读取。\n`);
+      return 0;
+    }
+    const digest = await buildDailyDigest({ cwd, date, timezone: config.timezone, dataDir: config.dataDir, content: config.content });
+    emit(digest, json, digest.markdown);
+    return digest.errors.length ? 1 : 0;
+  }
   if (command === 'doctor') {
     assertFlags(argv, ['--network', '--json']);
     const result = inspect(cwd, config, argv.includes('--network'));

@@ -17,6 +17,8 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { resolveAuthor, classifyEmail } from './author.mjs';
+import { loadConfig } from './config.mjs';
+import { buildDailyDigest, requireCompleteDigest } from './digest.mjs';
 import { git, gitSafe, failure, repositoryRoot, detectDefaultBranch, validateBranch, safeDataFile, withRepositoryLock, pushWithRetry, checkPendingCommits } from './repository.mjs';
 
 const log = (text) => (process.argv.includes('--json') ? process.stderr : process.stdout).write(text);
@@ -306,7 +308,7 @@ async function runLocked(args, cwd) {
   let totalCommits = Number(gitSafe(cwd, ['rev-list', '--count', 'HEAD']) || '0');
   if (!Number.isFinite(totalCommits)) totalCommits = 0;
 
-  const content = [
+  let content = [
     `# ${targetDate}`,
     '',
     `- 生成时间：${isoWithOffset(now, tz)}`,
@@ -316,6 +318,13 @@ async function runLocked(args, cwd) {
     '- 由 scripts/auto-commit.mjs 自动生成',
     '',
   ].join('\n');
+
+  const contentConfig = loadConfig(cwd).content;
+  let digest = null;
+  if (!fileExists && Object.values(contentConfig).some(source => source.enabled)) {
+    digest = requireCompleteDigest(await buildDailyDigest({ cwd, date: targetDate, timezone: tz, dataDir, content: contentConfig, now }));
+    content += `\n${digest.markdown}`;
+  }
 
   let action;
   if (fileExists) {
@@ -509,6 +518,8 @@ async function runLocked(args, cwd) {
       pendingCount: extra.pendingCount || 0,
       dryRun,
       notices,
+      content: digest ? { version: 1, cards: digest.snapshot.learning.cards, projects: digest.snapshot.projects.length,
+        nodejsVersion: digest.snapshot.nodejs?.version || null, sources: digest.sources.length } : null,
     };
   }
 }

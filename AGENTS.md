@@ -12,6 +12,9 @@
 - `green-wall`：本机启动器；优先 PATH 上的 Node，其次本机 Codex 捆绑 Node。
 - `scripts/green-wall.mjs`：统一入口 init / doctor / status / run / test。
 - `scripts/config.mjs`：业务配置校验和身份优先级。
+- `scripts/digest.mjs`：学习输入、公开项目活动、Node.js 发布快照及日报渲染。
+- `scripts/digest.test.mjs`：离线来源适配、快照比较与 CLI 集成测试，由 selftest 调用。
+- `notes/YYYY-MM-DD.md`：用户主动提交的学习输入；禁止扫描其他本地笔记目录。
 - `green-wall.config.json`：当前账号配置；禁止 token、密钥及未知字段。
 - `scripts/auto-commit.mjs`：单次生成、提交、校验、推送及补推。
 - `scripts/repository.mjs`：Git 封装、真实路径校验、默认分支识别、运行锁、推送恢复。
@@ -39,6 +42,10 @@
 12. 实际运行必须持有仓库运行锁；演练不创建记录、提交、运行日志或锁。直接使用 --summary-out 是调用者请求的诊断输出例外。
 13. --json 的 stdout 只输出一个 JSON 对象，人类日志走 stderr。日志不能伪称本地状态等于 GitHub Actions 实时状态。
 14. Actions 外部输入经 env 注入，run 里不直接插入 inputs.* 或 github.* 表达式；默认分支由仓库元数据确认。
+
+15. 日报保留来源和采集时刻；无法采集不能写成零变化。必需外部来源失败时不生成提交，让后续调度重试。
+16. 学习卡片只提取明确 Q:/A:，不编造学习内容；公开项目指标与 Node Release 仅保存选定字段，禁止保存响应认证头或 token。
+17. 当天已有日报不改写，新格式用 preview 验证。结构化快照保存在同一 Markdown 内，仍然只提交一个每日文件。回填不声称还原历史 Issue/版本状态。
 
 ## 验证与完成标准
 

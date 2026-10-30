@@ -4,5 +4,23 @@
   "timezone": "Asia/Shanghai",
   "dataDir": "data/daily",
   "pushAttempts": 3,
-  "author": { "name": "", "email": "", "actor": "" }
+  "author": {
+    "name": "",
+    "email": "",
+    "actor": ""
+  },
+  "content": {
+    "learning": {
+      "enabled": false,
+      "notesDir": "notes"
+    },
+    "projects": {
+      "enabled": false,
+      "repositories": []
+    },
+    "publicData": {
+      "enabled": false,
+      "nodejsRelease": true
+    }
+  }
 }

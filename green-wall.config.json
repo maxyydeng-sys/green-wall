@@ -8,5 +8,21 @@
     "name": "maxyydeng-sys",
     "email": "maxyydeng@gmail.com",
     "actor": "maxyydeng-sys"
+  },
+  "content": {
+    "learning": {
+      "enabled": true,
+      "notesDir": "notes"
+    },
+    "projects": {
+      "enabled": true,
+      "repositories": [
+        "maxyydeng-sys/green-wall"
+      ]
+    },
+    "publicData": {
+      "enabled": true,
+      "nodejsRelease": true
+    }
   }
 }

@@ -2,11 +2,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { classifyEmail, looksLikeEmail } from './author.mjs';
 import { failure, safeDataFile } from './repository.mjs';
+import { validateContent } from './digest.mjs';
 
 export const CONFIG_NAME = 'green-wall.config.json';
 export const defaults = {
   version: 1, enabled: true, timezone: 'Asia/Shanghai', dataDir: 'data/daily',
   pushAttempts: 3, author: { name: '', email: '', actor: '' },
+  content: {},
 };
 
 export function validateConfig(value, cwd) {
@@ -27,6 +29,7 @@ export function validateConfig(value, cwd) {
   }
   if (config.author.email && (!looksLikeEmail(config.author.email) || classifyEmail(config.author.email, { allowGitHubComEmail: process.env.GREEN_WALL_ALLOW_GITHUB_COM === '1' }).blocked)) reject('author.email 格式不正确或属于平台/机器人地址');
   if (config.author.actor && !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(config.author.actor)) reject('author.actor 不是合法 GitHub 用户名');
+  config.content = validateContent(config.content, cwd);
   return config;
 }
 
