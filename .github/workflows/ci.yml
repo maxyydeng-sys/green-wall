@@ -1,0 +1,33 @@
+name: regression-tests
+
+on:
+  push:
+    paths-ignore:
+      - 'data/**'
+  pull_request:
+    paths-ignore:
+      - 'data/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 离线行为回归（临时仓库，不访问真实仓库）
+        run: node scripts/selftest.mjs

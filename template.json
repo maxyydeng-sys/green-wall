@@ -1,0 +1,5 @@
+{
+  "owner": "@owner@",
+  "repo": "@repo@",
+  "description": "GitHub 贡献图自动提交机器人：每天一条有内容的提交，幂等、可回填、主动拦截机器人邮箱"
+}

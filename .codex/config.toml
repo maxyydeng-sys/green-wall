@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# green-wall 项目级 Codex 配置
+#
+# 加载条件：只有在你「信任」本项目时才会加载（Codex 首次打开会问）。
+# 优先级：命令行参数 > 本项目 .codex/config.toml > ~/.codex/config.toml
+#
+# 这里只写「本项目和用户全局配置不一样」的项，其余一律继承全局，
+# 避免哪天全局改了、这里还钉死旧值。
+# ---------------------------------------------------------------------------
+
+# 改文件、跑 git、跑 selftest 都需要写工作区，所以是 workspace-write 而不是 read-only。
+sandbox_mode = "workspace-write"
+
+# on-request：Codex 自己判断什么时候来问你。
+# 具体操作是否需要审批由用户授权及当前会话策略决定；本文件不能覆盖会话限制。
+approval_policy = "on-request"
+
+# model_reasoning_effort 故意不写：继承已有设置。
+# 本项目的任务都很小且有 selftest 兜底，想省额度可以在这里临时降到 "medium"。
+
+[sandbox_workspace_write]
+# 必须开网络，原因有两个：
+#   1. git push 要走网络（本地跑 selftest 推的是文件路径 bare 仓库，不受影响）
+#   2. 未显式配置 GIT_AUTHOR_EMAIL 时，脚本会调 api.github.com 按账号 ID 推导别名邮箱
+# 如果你只跑 --dry-run / --no-push，可以改成 false 收紧沙箱。
+network_access = true
+
+[shell_environment_policy]
+# 关键防线：git 的环境变量优先级高于 `git -c user.email=...`。
+# 如果 shell 里导出过 GIT_AUTHOR_EMAIL，
+# Codex 在沙箱里跑脚本时会被它静默覆盖，刷出一堆不计入贡献图的提交。
+# 这里把这 6 个变量从子进程环境里剔掉；统一入口从业务配置传入明确身份。
+exclude = [
+  "GIT_AUTHOR_NAME",
+  "GIT_AUTHOR_EMAIL",
+  "GIT_AUTHOR_DATE",
+  "GIT_COMMITTER_NAME",
+  "GIT_COMMITTER_EMAIL",
+  "GIT_COMMITTER_DATE",
+]

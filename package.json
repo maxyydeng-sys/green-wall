@@ -1,0 +1,14 @@
+{
+  "name": "green-wall",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node scripts/selftest.mjs",
+    "test:network": "node scripts/selftest.mjs --network",
+    "doctor": "node scripts/green-wall.mjs doctor",
+    "status": "node scripts/green-wall.mjs status",
+    "start": "node scripts/green-wall.mjs run"
+  }
+}

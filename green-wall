@@ -1,0 +1,15 @@
+#!/bin/sh
+# Works on this Mac even when Node is bundled with Codex rather than on PATH.
+set -eu
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if command -v node >/dev/null 2>&1; then
+  node_bin=$(command -v node)
+else
+  node_bin="$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node"
+fi
+if [ ! -x "$node_bin" ]; then
+  echo '请安装 Node >= 20，然后运行 node scripts/green-wall.mjs --help。' >&2
+  exit 1
+fi
+cd "$project_dir"
+exec "$node_bin" "$project_dir/scripts/green-wall.mjs" "$@"

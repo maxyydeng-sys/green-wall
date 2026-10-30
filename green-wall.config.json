@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "enabled": true,
+  "timezone": "Asia/Shanghai",
+  "dataDir": "data/daily",
+  "pushAttempts": 3,
+  "author": {
+    "name": "maxyydeng-sys",
+    "email": "maxyydeng@gmail.com",
+    "actor": "maxyydeng-sys"
+  }
+}
